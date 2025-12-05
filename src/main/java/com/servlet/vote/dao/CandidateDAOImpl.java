@@ -1,0 +1,81 @@
+package com.servlet.vote.dao;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+
+import com.servlet.vote.dto.Candidate;
+import com.servlet.vote.util.DbConnection;
+
+public class CandidateDAOImpl implements CandidateDAO{
+
+	@Override
+	public boolean register(Candidate c) {
+		String sql = "INSERT INTO candidate(name, party, manifesto) VALUES(?,?,?)";
+        try {
+            Connection con = DbConnection.getConnector();
+            PreparedStatement ps = con.prepareStatement(sql);
+
+            ps.setString(1, c.getName());
+            ps.setString(2, c.getParty());
+            ps.setString(3, c.getManifesto());
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+	}
+
+	@Override
+	public Candidate login(String name) {
+		String sql = "SELECT * FROM candidate WHERE name=?";
+        try {
+            Connection con =DbConnection.getConnector();
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, name);
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                Candidate c = new Candidate();
+                c.setId(rs.getInt("id"));
+                c.setName(rs.getString("name"));
+                c.setParty(rs.getString("party"));
+                c.setManifesto(rs.getString("manifesto"));
+                c.setApproved(rs.getBoolean("approved"));
+                c.setVotes(rs.getInt("votes"));
+                return c;
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return null;
+	}
+	
+	@Override
+	public boolean approve(int id) {
+        String sql = "UPDATE candidate SET approved=true WHERE id=?";
+        try {
+            Connection con = DbConnection.getConnector();
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, id);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+
+	
+	@Override
+    public boolean addVote(int candidateId) {
+        String sql = "UPDATE candidate SET votes = votes + 1 WHERE id=?";
+        try {
+            Connection con = DbConnection.getConnector();
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, candidateId);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+
+}
