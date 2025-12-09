@@ -15,7 +15,7 @@ public class ElectionDAOImpl implements ElectionDAO {
 
     @Override
     public boolean create(Election e) {
-        String sql = "INSERT INTO election(title, description, status) VALUES(?,?,?)";
+        String sql = "INSERT INTO election(title, description, status, type) VALUES(?,?,?,?)";
         try {
             Connection con = DbConnection.getConnector();
             PreparedStatement ps = con.prepareStatement(sql);
@@ -23,6 +23,7 @@ public class ElectionDAOImpl implements ElectionDAO {
             ps.setString(1, e.getTitle());
             ps.setString(2, e.getDescription());
             ps.setString(3, e.getStatus());
+            ps.setString(4, e.getType());
 
             return ps.executeUpdate() > 0;
 
@@ -46,6 +47,7 @@ public class ElectionDAOImpl implements ElectionDAO {
                 e.setTitle(rs.getString("title"));
                 e.setDescription(rs.getString("description"));
                 e.setStatus(rs.getString("status"));
+                e.setType(rs.getString("type"));
                 list.add(e);
             }
         } catch (Exception e) { e.printStackTrace(); }
@@ -69,9 +71,7 @@ public class ElectionDAOImpl implements ElectionDAO {
         return false;
     }
 
-    // ------------------------ NEW METHODS ------------------------
-
-    /** Get all elections currently ONGOING */
+    @Override
     public List<Election> getOngoingElections() {
         List<Election> list = new ArrayList<>();
         String sql = "SELECT * FROM election WHERE status='ONGOING'";
@@ -87,19 +87,19 @@ public class ElectionDAOImpl implements ElectionDAO {
                 e.setTitle(rs.getString("title"));
                 e.setDescription(rs.getString("description"));
                 e.setStatus(rs.getString("status"));
+                e.setType(rs.getString("type"));
                 list.add(e);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { e.printStackTrace(); }
+
         return list;
     }
 
-    /** Get all candidates linked to ONGOING elections */
+    @Override
     public List<Map<String, Object>> getOngoingElectionCandidates() {
         List<Map<String, Object>> list = new ArrayList<>();
 
-        String sql = "SELECT e.id AS electionId, e.title, e.status, " +
+        String sql = "SELECT e.id AS electionId, e.title, e.status, e.type, " +
                      "c.id AS candidateId, c.name AS candidateName, c.party " +
                      "FROM election e " +
                      "LEFT JOIN candidate c ON c.election_id = e.id " +
@@ -112,20 +112,16 @@ public class ElectionDAOImpl implements ElectionDAO {
 
             while (rs.next()) {
                 Map<String, Object> row = new HashMap<>();
-
                 row.put("electionId", rs.getInt("electionId"));
                 row.put("title", rs.getString("title"));
                 row.put("status", rs.getString("status"));
+                row.put("type", rs.getString("type"));
                 row.put("candidateId", rs.getInt("candidateId"));
                 row.put("candidateName", rs.getString("candidateName"));
                 row.put("party", rs.getString("party"));
-
                 list.add(row);
             }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { e.printStackTrace(); }
 
         return list;
     }

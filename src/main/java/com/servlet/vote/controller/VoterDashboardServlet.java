@@ -27,7 +27,9 @@ public class VoterDashboardServlet extends HttpServlet {
 
         HttpSession session = req.getSession(false);
 
+        // -----------------------------
         // Ensure voter is logged in
+        // -----------------------------
         if (session == null || session.getAttribute("voterId") == null) {
             resp.sendRedirect("VoterLogin.jsp");
             return;
@@ -37,36 +39,41 @@ public class VoterDashboardServlet extends HttpServlet {
         String voterName = (String) session.getAttribute("voterName");
 
         boolean approved = false;
-        boolean hasVoted = false;
 
-        // Fetch updated voter status from DB
+        // ----------------------------------------
+        // Fetch UP-TO-DATE voter approval status
+        // ----------------------------------------
         try (Connection con = DbConnection.getConnector();
              PreparedStatement ps = con.prepareStatement(
-                     "SELECT approved, hasVoted FROM voter WHERE id=?")) {
+                     "SELECT approved FROM voter WHERE id=?")) {
 
             ps.setInt(1, voterId);
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
                 approved = rs.getBoolean("approved");
-                hasVoted = rs.getBoolean("hasVoted");
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        // Fetch ONGOING elections + candidates
+        // ---------------------------------------------------
+        // Fetch ALL ongoing elections + their candidates
+        // ---------------------------------------------------
         ElectionDAO edao = new ElectionDAOImpl();
         List<Map<String, Object>> electionData = edao.getOngoingElectionCandidates();
 
+        // ---------------------------------------------------
+        // Pass attributes to JSP
+        // ---------------------------------------------------
         req.setAttribute("approved", approved);
-        req.setAttribute("hasVoted", hasVoted);
-        req.setAttribute("electionData", electionData);
         req.setAttribute("voterName", voterName);
+        req.setAttribute("electionData", electionData);
 
         req.getRequestDispatcher("VoterDashboard.jsp").forward(req, resp);
     }
+
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)

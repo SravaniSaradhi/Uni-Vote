@@ -8,7 +8,6 @@
 </head>
 <body>
 
-<!-- Navigation Bar -->
 <div class="navbar">
     <div class="logo">Uni-Vote</div>
     <div>
@@ -19,20 +18,24 @@
     </div>
 </div>
 
-<!-- Center Registration Card -->
 <div class="center-box">
     <h2>Voter Registration</h2>
 
     <form action="VoterRegisterServlet" method="post">
-
         <label>Full Name</label>
         <input type="text" name="name" required>
 
         <label>Email</label>
         <input type="email" name="email" required>
 
+        <label>Aadhar Number</label>
+        <input type="text" name="aadhar" maxlength="12" required>
+
+        <label>Date of Birth</label>
+        <input type="date" name="dob" required>
+
         <label>Phone</label>
-        <input type="text" name="phone" required>
+        <input type="text" name="phone" maxlength="10" required>
 
         <label>Password</label>
         <input type="password" name="password" required>
@@ -41,12 +44,10 @@
         <input type="submit" value="Register">
     </form>
 
-    <!-- Success Message -->
     <p style="color:green; margin-top:10px;">
         <%= request.getAttribute("success") != null ? request.getAttribute("success") : "" %>
     </p>
 
-    <!-- Error Message -->
     <p style="color:red; margin-top:5px;">
         <%= request.getAttribute("error") != null ? request.getAttribute("error") : "" %>
     </p>

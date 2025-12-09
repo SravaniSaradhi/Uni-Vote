@@ -41,6 +41,14 @@
 
             <label>Description</label>
             <textarea name="description" placeholder="Enter description" rows="4" required></textarea>
+            <label>Election Type</label>
+				<select name="type" required>
+				  <option value="PUBLIC">Public</option>
+				  <option value="YOUTH">Youth</option>
+				  <option value="COLLEGE">College</option>
+				  <option value="CLASS">Class Representative</option>
+				</select>
+            
 
             <br>
             <input type="submit" value="Create Election">

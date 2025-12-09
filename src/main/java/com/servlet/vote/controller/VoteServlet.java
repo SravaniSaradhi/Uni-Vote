@@ -1,19 +1,21 @@
 package com.servlet.vote.controller;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.Period;
+import java.sql.*;
 
-import com.servlet.vote.dao.CandidateDAO;
-import com.servlet.vote.dao.CandidateDAOImpl;
 import com.servlet.vote.dao.VoteDAO;
-import com.servlet.vote.dao.VoterDAO;
+import com.servlet.vote.dao.CandidateDAOImpl;
+import com.servlet.vote.dao.CandidateDAO;
 import com.servlet.vote.dao.VoterDAOImpl;
+import com.servlet.vote.dao.VoterDAO;
+import com.servlet.vote.dto.Voter;
+import com.servlet.vote.util.DbConnection;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.*;
 
 @WebServlet("/VoteServlet")
 public class VoteServlet extends HttpServlet {
@@ -24,38 +26,69 @@ public class VoteServlet extends HttpServlet {
 
         HttpSession session = req.getSession(false);
 
-        // Check login
-        if (session == null || session.getAttribute("voterId") == null) {
+        if (session == null || session.getAttribute("voter") == null) {
             resp.sendRedirect("VoterLogin.jsp");
             return;
         }
 
-        int voterId = (int) session.getAttribute("voterId");
+        Voter voter = (Voter) session.getAttribute("voter");
 
-        // Fetch hasVoted from DB to avoid outdated session data
-        VoterDAO voterDAO = new VoterDAOImpl();
-        boolean hasVoted = voterDAO.hasVoted(voterId);   // <-- you must add this method in DAO
+        int candidateId = Integer.parseInt(req.getParameter("candidateId"));
 
-        if (hasVoted) {
-            req.setAttribute("msg", "You have already voted!");
+        String electionType = null;
+        int electionId = 0;
+
+        // find election by candidate
+        try(Connection con = DbConnection.getConnector();
+            PreparedStatement ps = con.prepareStatement(
+                "SELECT e.id, e.type FROM election e JOIN candidate c ON c.election_id=e.id WHERE c.id=?"
+            )) {
+
+            ps.setInt(1, candidateId);
+            ResultSet rs = ps.executeQuery();
+
+            if(rs.next()){
+                electionId = rs.getInt("id");
+                electionType = rs.getString("type");
+            }
+
+        }catch(Exception e){ e.printStackTrace(); }
+
+
+        VoteDAO voteDAO = new VoteDAO();
+
+        // 🔥 KEY PART: per-election check
+        if(voteDAO.hasVotedInElection(voter.getId(), electionId)){
+            req.setAttribute("msg", "You already voted in this election!");
             req.getRequestDispatcher("VoterDashboardServlet").forward(req, resp);
             return;
         }
 
-        int candidateId = Integer.parseInt(req.getParameter("candidateId"));
+        // =============================
+        // Age check only for PUBLIC/YOUTH
+        // =============================
+        if(electionType.equals("PUBLIC") || electionType.equals("YOUTH"))
+        {
+            String dobStr = voter.getDob();
+            LocalDate dob = LocalDate.parse(dobStr);
+            int age = Period.between(dob, LocalDate.now()).getYears();
 
-        VoteDAO voteDAO = new VoteDAO();
-        CandidateDAO candidateDAO = new CandidateDAOImpl();
+            if(age < 18){
+                req.setAttribute("msg","You must be 18+ for this election");
+                req.getRequestDispatcher("VoterDashboardServlet").forward(req, resp);
+                return;
+            }
+        }
 
-        boolean voteInserted = voteDAO.recordVote(voterId, candidateId);
+        boolean ok = voteDAO.recordVote(voter.getId(), candidateId, electionId);
 
-        if (voteInserted) {
-            candidateDAO.addVote(candidateId);
-            voterDAO.markVoted(voterId);
+        if(ok){
+            CandidateDAO cdao = new CandidateDAOImpl();
+            cdao.addVote(candidateId);
 
-            req.setAttribute("msg", "Vote Cast Successfully!");
-        } else {
-            req.setAttribute("msg", "Failed to cast vote. Try again!");
+            req.setAttribute("msg","Vote recorded!");
+        }else{
+            req.setAttribute("msg","Vote failed!");
         }
 
         req.getRequestDispatcher("VoterDashboardServlet").forward(req, resp);

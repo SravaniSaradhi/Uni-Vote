@@ -7,20 +7,10 @@ import com.servlet.vote.dto.Election;
 
 public interface ElectionDAO {
 
-    // Create new election
-    public boolean create(Election e);
+    boolean create(Election e);
+    List<Election> getAll();
+    boolean updateStatus(int electionId, String status);
 
-    // Get all elections (admin)
-    public List<Election> getAll();
-
-    // Update election status (e.g., ONGOING, CLOSED)
-    public boolean updateStatus(int electionId, String status);
-
-    // ---------------- NEW METHODS ----------------
-
-    // Get all elections currently ONGOING (basic info)
-    public List<Election> getOngoingElections();
-
-    // Get ONGOING elections with their candidates (for voter dashboard)
-    public List<Map<String, Object>> getOngoingElectionCandidates();
+    List<Election> getOngoingElections();
+    List<Map<String, Object>> getOngoingElectionCandidates();
 }

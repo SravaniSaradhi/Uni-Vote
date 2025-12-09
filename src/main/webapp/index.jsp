@@ -45,7 +45,7 @@
 
         <div style="margin-top:20px; display:flex; flex-direction:column; gap:15px; align-items:center;">
             <a href="VoterRegister.jsp"><button>Voter Registration</button></a>
-            <a href="CandidateRegister.jsp"><button class="btn-secondary">Candidate Registration</button></a>
+            <a href="CandidateRegisterServlet"><button class="btn-secondary">Candidate Registration</button></a>
         </div>
     </div>
 

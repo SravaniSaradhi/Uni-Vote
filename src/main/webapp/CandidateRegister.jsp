@@ -1,4 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page import="java.util.*, com.servlet.vote.dto.Election" %>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -19,7 +21,6 @@
     </div>
 </div>
 
-<!-- Center Registration Box -->
 <div class="center-box">
     <h2>Candidate Registration</h2>
 
@@ -33,6 +34,23 @@
 
         <label>Manifesto</label>
         <textarea name="manifesto" rows="4" required></textarea>
+
+        <!-- New Election Dropdown -->
+        <label>Select Election</label>
+        <select name="electionId" required>
+            <option value="">-- Select Election --</option>
+
+            <%
+                List<Election> elections = (List<Election>)request.getAttribute("elections");
+                if (elections != null) {
+                    for (Election e : elections) {
+            %>
+                <option value="<%= e.getId() %>"><%= e.getTitle() %></option>
+            <%
+                    }
+                }
+            %>
+        </select>
 
         <label>Password</label>
         <input type="password" name="password" required>
@@ -50,6 +68,7 @@
     <p style="color:red; margin-top:5px;">
         <%= request.getAttribute("error") != null ? request.getAttribute("error") : "" %>
     </p>
+
 </div>
 
 </body>
