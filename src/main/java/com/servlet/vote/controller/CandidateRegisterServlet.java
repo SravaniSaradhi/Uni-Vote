@@ -20,45 +20,46 @@ import jakarta.servlet.http.HttpServletResponse;
 public class CandidateRegisterServlet extends HttpServlet {
 
 	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-	        throws ServletException, IOException {
-
-	    ElectionDAO edao = new ElectionDAOImpl();
-	    List<Election> list = edao.getAll();
-	    System.out.println(list);
-
-	    req.setAttribute("elections", list);
-	    req.getRequestDispatcher("CandidateRegister.jsp").forward(req, resp);
-	}
-
-
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        String name = req.getParameter("name");
-        String party = req.getParameter("party");
-        String manifesto = req.getParameter("manifesto");
-        String password = req.getParameter("password");
-        int electionId = Integer.parseInt(req.getParameter("electionId"));
+        ElectionDAO edao = new ElectionDAOImpl();
+        List<Election> elections = edao.getAll();// or getOngoingElections()
+        System.out.println(elections);
+        System.out.println("Elections loaded: " + elections.size());
 
-        Candidate c = new Candidate();
-        c.setName(name);
-        c.setParty(party);
-        c.setManifesto(manifesto);
-        c.setApproved(false);
-        c.setVotes(0);
-        c.setPassword(password);
-        c.setElectionId(electionId);
-
-        CandidateDAO dao = new CandidateDAOImpl();
-
-        if (dao.register(c)) {
-            req.setAttribute("success", "Candidate Registered Successfully!");
-        } else {
-            req.setAttribute("error", "Failed to Register Candidate");
-        }
-
-        doGet(req, resp);
+        req.setAttribute("elections", elections);
+        req.getRequestDispatcher("CandidateRegister.jsp").forward(req, resp);
     }
+
+
+	 @Override
+	    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+	            throws ServletException, IOException {
+
+	        String name = req.getParameter("name");
+	        String party = req.getParameter("party");
+	        String manifesto = req.getParameter("manifesto");
+	        String password = req.getParameter("password");
+	        int electionId = Integer.parseInt(req.getParameter("electionId"));
+
+	        Candidate c = new Candidate();
+	        c.setName(name);
+	        c.setParty(party);
+	        c.setManifesto(manifesto);
+	        c.setPassword(password);
+	        c.setElectionId(electionId);
+	        c.setApproved(false);
+	        c.setVotes(0);
+
+	        CandidateDAO dao = new CandidateDAOImpl();
+
+	        if (dao.register(c)) {
+	            req.setAttribute("success", "Candidate registered successfully!");
+	        } else {
+	            req.setAttribute("error", "Registration failed");
+	        }
+
+	        doGet(req, resp); // reload elections again
+	    }
 }

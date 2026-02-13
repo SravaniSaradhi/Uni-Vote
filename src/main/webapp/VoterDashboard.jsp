@@ -42,7 +42,41 @@
 
 <div class="container">
 
-    <h2>Welcome, <%= voterName %></h2>
+   <div class="container">
+
+    <!-- HEADER ROW -->
+    <div style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:20px;
+    ">
+        <h2 style="margin:0;">
+            Welcome, <%= voterName %>
+        </h2>
+
+        <a href="DownloadVoterID"
+           style="
+               padding:10px 18px;
+               background:#1a3c6e;
+               color:white;
+               border-radius:6px;
+               text-decoration:none;
+               font-weight:600;
+           ">
+           ⬇ Download Voter ID
+        </a>
+        <a href="VoterResultsServlet"
+   style="margin-left:15px;
+          padding:10px 18px;
+          background:#198754;
+          color:white;
+          border-radius:6px;
+          text-decoration:none;">
+   View Results
+</a>
+        
+    </div>
 
     <% if (!approved) { %>
         <p style="color:red; font-weight:600;">
@@ -54,6 +88,11 @@
         </p>
     <% } %>
 
+   
+   
+    
+    
+	   
     <h3 style="margin-top:30px;">Available Elections</h3>
 
     <%

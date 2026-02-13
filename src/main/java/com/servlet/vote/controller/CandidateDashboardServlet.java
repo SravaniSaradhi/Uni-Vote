@@ -31,7 +31,7 @@ public class CandidateDashboardServlet extends HttpServlet {
 
 	        // If you want live vote count refresh
 	        CandidateDAO dao = new CandidateDAOImpl();
-	        Candidate updated = dao.login(c.getName());
+	        Candidate updated = dao.login(c.getName(),c.getPassword());
 
 	        req.setAttribute("candidate", updated);
 

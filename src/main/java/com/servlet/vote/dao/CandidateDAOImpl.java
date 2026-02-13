@@ -35,12 +35,13 @@ public class CandidateDAOImpl implements CandidateDAO {
     }
 
     @Override
-    public Candidate login(String name) {
-        String sql = "SELECT * FROM candidate WHERE name=?";
+    public Candidate login(String name ,String password) {
+        String sql = "SELECT * FROM candidate WHERE name=? and password=?";
         try {
             Connection con = DbConnection.getConnector();
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setString(1, name);
+            ps.setString(2,password);
 
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {

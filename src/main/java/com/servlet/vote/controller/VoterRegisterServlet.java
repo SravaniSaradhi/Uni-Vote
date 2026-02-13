@@ -1,83 +1,110 @@
 package com.servlet.vote.controller;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
+
 import com.servlet.vote.dao.VoterDAO;
 import com.servlet.vote.dao.VoterDAOImpl;
 import com.servlet.vote.dto.Voter;
+import com.servlet.vote.util.EmailUtil;
+import com.servlet.vote.util.OTPUtil;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.Part;
 
 @WebServlet("/VoterRegisterServlet")
+@MultipartConfig(
+        fileSizeThreshold = 1024 * 1024,
+        maxFileSize = 1024 * 1024 * 5,
+        maxRequestSize = 1024 * 1024 * 10
+)
 public class VoterRegisterServlet extends HttpServlet {
 
-    private VoterDAO vdao = new VoterDAOImpl();
+    private VoterDAO voterDAO = new VoterDAOImpl();
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        String name   = req.getParameter("name");
-        String email  = req.getParameter("email");
-        String aadhar = req.getParameter("aadhar");
-        String dob    = req.getParameter("dob");   // yyyy-MM-dd
-        String phone  = req.getParameter("phone");
+        String name = req.getParameter("name").trim();
+        String email = req.getParameter("email").trim();
         String password = req.getParameter("password");
+        String phone = req.getParameter("phone").trim();
+        String aadhar = req.getParameter("aadhar").trim();
+        String dob = req.getParameter("dob");
 
-        // 1) Email format validation
-        if (!email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
-            req.setAttribute("error", "Invalid Email Format!");
+        // 🔍 Email already exists validation
+        if (voterDAO.emailExists(email)) {
+            req.setAttribute("error", "Email already registered! Please login or use another email.");
             req.getRequestDispatcher("VoterRegister.jsp").forward(req, resp);
             return;
         }
 
-        // 2) Aadhar validation: exactly 12 digits
-        if (!aadhar.matches("^[0-9]{12}$")) {
-            req.setAttribute("error", "Aadhar must be exactly 12 digits!");
+        // 🔍 Aadhaar already exists validation
+        if (voterDAO.aadharExists(aadhar)) {
+            req.setAttribute("error", "Aadhaar number already exists in database!");
             req.getRequestDispatcher("VoterRegister.jsp").forward(req, resp);
             return;
         }
 
-        // 3) Email already used?
-        if (vdao.emailExists(email)) {
-            req.setAttribute("error", "Email already registered!");
-            req.getRequestDispatcher("VoterRegister.jsp").forward(req, resp);
-            return;
-        }
+        // 📌 PHOTO UPLOAD
+        Part photoPart = req.getPart("photo");
+        String fileName = null;
 
-        // 4) Aadhar already used?
-        if (vdao.aadharExists(aadhar)) {
-            req.setAttribute("error", "Aadhar already registered!");
-            req.getRequestDispatcher("VoterRegister.jsp").forward(req, resp);
-            return;
-        }
+        if (photoPart != null && photoPart.getSize() > 0 && photoPart.getSubmittedFileName() != null) {
+            String original = photoPart.getSubmittedFileName();
 
-        // 5) Hash password with BCrypt
-        String hashed = BCrypt.withDefaults().hashToString(12, password.toCharArray());
+            if (original.contains(".")) {
+                String ext = original.substring(original.lastIndexOf(".")).toLowerCase();
+                fileName = "photo_" + System.currentTimeMillis() + ext;
 
-        Voter v = new Voter();
-        v.setName(name);
-        v.setEmail(email);
-        v.setPhone(phone);
-        v.setAadhar(aadhar);
-        v.setDob(dob);
-        v.setPassword(hashed);
-        v.setApproved(false);
-        v.setHasVoted(false);
+                String uploadDir = "C:/UniVoteUploads/";
+                File dir = new File(uploadDir);
+                if (!dir.exists()) dir.mkdirs();
 
-        boolean ok = vdao.register(v);
-
-        if (ok) {
-            req.setAttribute("success", "Registration successful! Wait for admin approval.");
-            req.getRequestDispatcher("VoterLogin.jsp").forward(req, resp);
+                Files.copy(photoPart.getInputStream(), Paths.get(uploadDir, fileName));
+                System.out.println("PHOTO SAVED: " + fileName);
+            }
         } else {
-            req.setAttribute("error", "Registration failed. Try again.");
+            req.setAttribute("error", "Photo upload is required!");
             req.getRequestDispatcher("VoterRegister.jsp").forward(req, resp);
+            return;
         }
+
+        // 📧 Send OTP
+        String otp = OTPUtil.generateOTP();
+        EmailUtil.sendOTP(email, otp);
+
+        // 🔐 Password Hashing
+        String hashedPwd = BCrypt.withDefaults().hashToString(12, password.toCharArray());
+
+        // 🧠 Store pending voter in session
+        Voter voter = new Voter();
+        voter.setName(name);
+        voter.setEmail(email);
+        voter.setPassword(hashedPwd);
+        voter.setPhone(phone);
+        voter.setAadhar(aadhar);
+        voter.setDob(dob);
+        voter.setPhoto(fileName);
+
+        HttpSession session = req.getSession();
+        session.setAttribute("otp", otp);
+        session.setAttribute("pendingVoter", voter);
+
+        System.out.println("📌 STORED IN SESSION → VOTER: " + voter.getPhoto());
+
+        resp.sendRedirect("VerifyOTP.jsp");
     }
 }

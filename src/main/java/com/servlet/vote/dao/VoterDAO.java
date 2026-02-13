@@ -1,5 +1,8 @@
 package com.servlet.vote.dao;
 
+import java.util.List;
+import java.util.Map;
+
 import com.servlet.vote.dto.Voter;
 
 public interface VoterDAO {
@@ -21,4 +24,8 @@ public interface VoterDAO {
     // new: validation helpers
     boolean emailExists(String email);
     boolean aadharExists(String aadhar);
+    
+    Voter getVoterById(int voterId);
+
+    List<Map<String, Object>> getElectionResults();
 }

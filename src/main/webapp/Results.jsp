@@ -1,34 +1,55 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
-<%@ page import="java.util.*, com.servlet.vote.dto.Candidate" %>
+<%@ page import="java.util.*" %>
 
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
     <title>Election Results | Uni-Vote</title>
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .winner {
+            background: #d4edda;
+            font-weight: bold;
+            color: #155724;
+        }
+    </style>
 </head>
 <body>
 
-<!-- Navbar -->
-<div class="navbar">
-    <div class="logo">Admin Panel</div>
-    <div>
-        <a href="AdminDashboard.jsp">Dashboard</a>
-        <a href="ManageElection.jsp">Elections</a>
-        <a href="index.jsp" class="btn-danger"
-           style="padding:8px 14px; border-radius:6px; background:#dc3545; color:white; text-decoration:none;">
-            Logout
-        </a>
-    </div>
-</div>
-
 <div class="container">
-
     <h2>Election Results</h2>
-    <p class="subtitle">Final vote count for all candidates.</p>
+    <p>Election-wise final vote count.</p>
 
-    <div class="card" style="padding:0;">
+<%
+    Object obj = request.getAttribute("results");
+
+    if (obj == null) {
+%>
+        <p style="color:red;">Results not available. Please open via Admin Dashboard.</p>
+<%
+    } else {
+        List<Map<String, Object>> results =
+            (List<Map<String, Object>>) obj;
+
+        if (results.isEmpty()) {
+%>
+            <p>No elections found.</p>
+<%
+        } else {
+            for (Map<String, Object> election : results) {
+
+                String title = (String) election.get("title");
+                List<Map<String, Object>> candidates =
+                    (List<Map<String, Object>>) election.get("candidates");
+
+                if (candidates == null || candidates.isEmpty()) {
+                    continue;
+                }
+%>
+
+    <div class="card" style="margin-top:25px;">
+        <h3><%= title %></h3>
+
         <table>
             <tr>
                 <th>Candidate</th>
@@ -36,27 +57,32 @@
                 <th>Votes</th>
             </tr>
 
-            <%
-                List<Candidate> results = (List<Candidate>) request.getAttribute("results");
-                if (results != null) {
-                    for (Candidate c : results) {
-            %>
-
-            <tr>
-                <td><%= c.getName() %></td>
-                <td><%= c.getParty() %></td>
-                <td style="font-weight:bold; color:#1a3c6e;"><%= c.getVotes() %></td>
+<%
+                boolean isWinner = true;
+                for (Map<String, Object> c : candidates) {
+%>
+            <tr class="<%= isWinner ? "winner" : "" %>">
+                <td><%= c.get("name") %></td>
+                <td><%= c.get("party") %></td>
+                <td><%= c.get("votes") %></td>
             </tr>
-
-            <%
-                    }
+<%
+                    isWinner = false;
                 }
-            %>
-
+%>
         </table>
+
+        <p style="margin-top:10px; font-weight:600;">
+            🏆 Winner: <%= candidates.get(0).get("name") %>
+        </p>
     </div>
 
-</div>
+<%
+            }
+        }
+    }
+%>
 
+</div>
 </body>
 </html>

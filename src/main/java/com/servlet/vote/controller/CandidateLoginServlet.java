@@ -25,7 +25,7 @@ public class CandidateLoginServlet extends HttpServlet{
         String name=req.getParameter("name");
 
         CandidateDAO dao = new CandidateDAOImpl ();
-        Candidate c = dao.login(name);
+        Candidate c = dao.login(name,password);
 
         if (c == null) {
             req.setAttribute("msg", "Invalid Email or Password");

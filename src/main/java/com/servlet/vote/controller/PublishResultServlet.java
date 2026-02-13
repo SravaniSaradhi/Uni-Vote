@@ -7,6 +7,8 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.servlet.vote.dao.ResultDAO;
+import com.servlet.vote.dao.ResultDAOImpl;
 import com.servlet.vote.dto.Candidate;
 import com.servlet.vote.util.DbConnection;
 
@@ -19,28 +21,17 @@ import jakarta.servlet.http.HttpServletResponse;
 @WebServlet("/PublishResultsServlet")
 public class PublishResultServlet extends HttpServlet{
 
-	 @Override
-	    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+	
 
-	        List<Candidate> results = new ArrayList<>();
+	    @Override
+	    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+	            throws ServletException, IOException {
 
-	        try {
-	            Connection con = DbConnection.getConnector();
-	            PreparedStatement ps = con.prepareStatement("SELECT * FROM candidate ORDER BY votes DESC");
-	            ResultSet rs = ps.executeQuery();
+	    	ResultDAO  dao = new ResultDAOImpl();
+	        req.setAttribute("results", dao.getElectionWiseResults());
 
-	            while (rs.next()) {
-	                Candidate c = new Candidate();
-	                c.setId(rs.getInt("id"));
-	                c.setName(rs.getString("name"));
-	                c.setParty(rs.getString("party"));
-	                c.setVotes(rs.getInt("votes"));
-	                results.add(c);
-	            }
-
-	        } catch (Exception e) { e.printStackTrace(); }
-
-	        req.setAttribute("results", results);
 	        req.getRequestDispatcher("Results.jsp").forward(req, resp);
 	    }
+	
+
 }

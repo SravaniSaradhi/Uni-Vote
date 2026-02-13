@@ -16,6 +16,9 @@
     <title>Candidate Dashboard | Uni-Vote</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
+<style>
+
+</style>
 <body>
 
 <!-- Navbar -->

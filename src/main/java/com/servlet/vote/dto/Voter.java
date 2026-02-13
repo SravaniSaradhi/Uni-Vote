@@ -11,6 +11,26 @@ public class Voter {
     private boolean hasVoted;
     private String aadhar;
     private String dob;
+    private String voterUid;
+    private String photo;
+
+    public String getPhoto() {
+        return photo;
+    }
+
+    public void setPhoto(String photo) {
+        this.photo = photo;
+    }
+
+
+    public String getVoterUid() {
+        return voterUid;
+    }
+
+    public void setVoterUid(String voterUid) {
+        this.voterUid = voterUid;
+    }
+
 
     public Voter() {}
 
